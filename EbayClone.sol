@@ -11,7 +11,10 @@ contract EBayClone {
     }
 
     uint productCounter;
-    mapping (uint => Product) public products;        
+    mapping (uint => Product) public products;
+
+    event ProductForSale(uint indexed id, address indexed seller, uint indexed price, address buyer, string name, string description);
+    event ProductSold(uint indexed id, address indexed seller, address indexed buyer, string name, string description, uint price);       
 
     function sellProduct(string _name, string _description, uint _price) public{
         
@@ -25,7 +28,9 @@ contract EBayClone {
         });
                 
         products[productCounter] = newProduct;
-        productCounter++;        
+        productCounter++;
+
+        emit ProductForSale(productCounter, msg.sender, _price, 0x0, _name, _description);
     }
 
     function getNumberOfProducts() public view returns (uint) {
@@ -33,12 +38,14 @@ contract EBayClone {
     }
    
     function buyProduct (uint _id) payable public{
-      Product storage product = products[_id];
-      //require(product.seller != 0x0);
-      require(product.buyer == 0x0); // article has not been bought
-      require(msg.sender != product.seller); // buyer cannot be same as seller
-      require(msg.value == product.price);
-      product.buyer = msg.sender;
-      product.seller.transfer(msg.value);
+        Product storage product = products[_id];
+        //require(product.seller != 0x0);
+        require(product.buyer == 0x0); // article has not been bought
+        require(msg.sender != product.seller); // buyer cannot be same as seller
+        require(msg.value == product.price);
+        product.buyer = msg.sender;
+        product.seller.transfer(msg.value);
+
+        emit ProductSold(_id, product.seller, msg.sender, product.name, product.description, msg.value);
     }
 }
